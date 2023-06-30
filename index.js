@@ -4,12 +4,12 @@ const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
 const mongoURL = process.env.MONGO_URI;
-const url = require("url");
-const dns = require("dns");
 const bodyParser = require("body-parser");
-const addOneUsername = require("./playground-1.mongodb");
 
 app.use(cors());
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
 const usernameSchema = mongoose.Schema({
   username: String,
 });
@@ -20,8 +20,8 @@ const addExcersiseSchema = mongoose.Schema({
   date: String,
 });
 
-const usernameModel = mongoose.Model("usernameModel", usernameSchema);
-const addExcersiseModel = mongoose.Model(
+const usernameModel = mongoose.model("usernameModel", usernameSchema);
+const addExcersiseModel = mongoose.model(
   "addExcersiseModel",
   addExcersiseSchema
 );
@@ -37,13 +37,22 @@ mongoose
   });
 
 app.use(express.static("public"));
-app.use(bodyParser.urlencoded({ extended: true }));
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/views/index.html");
+});
 
 app.post("/api/users", (req, res) => {
   let username = req.body.username;
-});
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/views/index.html");
+  const newUser = new usernameModel({ username: username });
+  newUser
+    .save()
+    .then((result) => {
+      res.status(201).json(result);
+    })
+    .catch((err) => {
+      res.status(500).json({ error: "Failed to save user" });
+    });
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
