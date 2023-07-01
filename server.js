@@ -5,6 +5,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const convertDate = require("./convert_date");
 // Create new username variables
 let id;
 let username;
@@ -13,7 +14,7 @@ app.use(cors());
 
 app.use(express.static("public"));
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 // --- Connect to mongodatabase ----
 mongoose
   .connect(mongoURL, {
@@ -72,25 +73,22 @@ app.post("/api/users", (req, res) => {
     });
 });
 
-app.post("/api/users/:id/exercises", (req, res) => {
-  let d = new Date(req.body.date);
-  let d_long = d.toLocaleDateString;
-  console.log(d_long);
+app.post(`/api/users/:id/exercises`, (req, res) => {
+  let d = convertDate(req.body.date);
   const newExercise = new Exercise({
     id: req.params.id,
     username: username,
-    date: req.body.date,
+    date: d,
     duration: req.body.duration,
     description: req.body.description,
   })
     .save()
     .then((result) => {
       console.log("Successfully saved");
-      let date = new Date(result.date);
       res.json({
         _id: result._id,
         username: result.username,
-        date: date,
+        date: result.date,
         duration: result.duration,
         description: result.description,
       });
